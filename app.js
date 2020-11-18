@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 
 mongoose.connect("mongodb://127.0.0.1:27017/rrs", { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => {
-        console.log("mongodb connected successfully");
+        // console.log("mongodb connected successfully");
     })
     .catch(err => {
         console.log(err);
@@ -23,6 +23,7 @@ require('./model/Reservation');
 require('./model/Rentals');
 require('./model/MealReservation');
 require('./model/ChargeToRoom');
+require('./model/Payment');
 
 app.use(require('./routes'));
 
