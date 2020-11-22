@@ -23,6 +23,10 @@ require('./model/Reservation');
 require('./model/Rentals');
 require('./model/MealReservation');
 require('./model/ChargeToRoom');
+require('./model/Payment');
+require('./model/admin/AddRoom');
+require('./model/admin/AddRoomDetails');
+require('./model/admin/AddRentalDetails');
 
 app.use(require('./routes'));
 
