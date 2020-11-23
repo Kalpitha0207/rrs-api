@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const router = require('express').Router();
 var auth = require('../../routes/auth');
 
-
 const Users = mongoose.model('User')
 const Reservation = mongoose.model('Reservation');
 const Rentals = mongoose.model('Rentals');
@@ -73,13 +72,7 @@ router.post('/signin', (req, res) => {
             },
         });
     }
-    if (!req.body.name) {
-        return res.status(422).json({
-            errors: {
-                message: 'Name required!',
-            },
-        });
-    }
+
     if (!req.body.password) {
         return res.status(422).json({
             errors: {
@@ -88,7 +81,7 @@ router.post('/signin', (req, res) => {
         });
     }
 
-    Users.findOne({ name: req.body.name }, (err, user) => {
+    Users.findOne({ name: req.body.email }, (err, user) => {
         if (user && user.validatePassword(req.body.password)) {
             return res.json({
                 message: 'user signed in successfully!',
@@ -107,7 +100,7 @@ router.post('/signin', (req, res) => {
 
 // RESERVATION 
 router.post('/reservation', (req, res) => {
-    if (!req.body.reservationType || !req.body.fromDate || !req.body.toDate
+    if (!req.body.userId || !req.body.reservationType || !req.body.fromDate || !req.body.toDate
         || !req.body.noOfRooms || !req.body.noOfAdults || !req.body.noOfChildren) {
         return res.status(422).json({
             errors: {
@@ -117,6 +110,7 @@ router.post('/reservation', (req, res) => {
     }
 
     var reservation = new Reservation();
+    reservation.userId = req.body.userId
     reservation.reservationType = req.body.reservationType;
     reservation.fromDate = req.body.fromDate;
     reservation.toDate = req.body.toDate;
@@ -124,41 +118,50 @@ router.post('/reservation', (req, res) => {
     reservation.noOfAdults = req.body.noOfAdults;
     reservation.noOfChildren = req.body.noOfChildren;
 
-    // HERE WE NEED TO CHECK WHETHER ROOMS ARE AVAILABLE OR NOT
-    Reservation.find({ noOfRooms: reservation.noOfRooms }, (err, Reservation) => {
-        if (Reservation.length == 0 || Reservation.length > req.body.noOfRooms) {
-            reservation.save((err, inserted) => {
-                if (err) {
-                    const errMsg = JSON.parse(JSON.stringify(err)).message;
-                    console.log(errMsg);
+    Users.findOne({ _id: req.body.userId }, (err, user) => {
+        if (!user) {
+            return res.json({
+                message: 'user not registered!',
+            });
+        } else {
+            // HERE WE NEED TO CHECK WHETHER ROOMS ARE AVAILABLE OR NOT
+            Reservation.find({ noOfRooms: reservation.noOfRooms }, (err, Reservation) => {
+                if (Reservation.length == 0 || Reservation.length > req.body.noOfRooms) {
+                    reservation.save((err, inserted) => {
+                        if (err) {
+                            const errMsg = JSON.parse(JSON.stringify(err)).message;
+                            console.log(errMsg);
+                            return res.status(422).json({
+                                errors: {
+                                    status: "Reservation not completed!",
+                                    message: errMsg
+                                }
+                            });
+                        } else {
+                            return res.status(200).json({
+                                success: {
+                                    message: "Reservation succefully completed and process next step for payment"
+                                }
+                            });
+                        }
+                    });
+                } else if (Reservation.length < req.body.noOfRooms && Reservation.length >= 1) {
                     return res.status(422).json({
                         errors: {
-                            status: "Reservation not completed!",
-                            message: errMsg
+                            message: `Only ${Reservation.length} rooms available`
                         }
                     });
                 } else {
-                    return res.status(200).json({
-                        success: {
-                            message: "Reservation succefully completed and process next step for payment"
+                    return res.status(422).json({
+                        errors: {
+                            message: "Rooms not available"
                         }
                     });
                 }
-            });
-        } else if (Reservation.length < req.body.noOfRooms && Reservation.length >= 1) {
-            return res.status(422).json({
-                errors: {
-                    message: `Only ${Reservation.length} rooms available`
-                }
-            });
-        } else {
-            return res.status(422).json({
-                errors: {
-                    message: "Rooms not available"
-                }
-            });
+            })
         }
     })
+
 });
 
 // RENTALS AND HIKES

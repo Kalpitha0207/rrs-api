@@ -118,43 +118,4 @@ router.post('/addRoomDetails', (req, res) => {
 });
 
 
-// ADD RENTAL DETAILS 
-router.post('/addRoomDetails', (req, res) => {
-    if (!req.body.type || !req.body.rentalFare || !req.body.noOfBikes
-        || !req.body.description || !req.body.image) {
-        return res.status(422).json({
-            errors: {
-                message: 'Please enter all required fields!'
-            }
-        })
-    }
-
-    var rentalDetails = new AddRentalDetails();
-    rentalDetails.type = req.body.type;
-    rentalDetails.rentalFare = req.body.rentalFare;
-    rentalDetails.noOfBikes = req.body.noOfBikes;
-    rentalDetails.description = req.body.description;
-    rentalDetails.image = req.body.image;
-
-    rentalDetails.save((err, inserted) => {
-        if (err) {
-            const errMsg = JSON.parse(JSON.stringify(err)).message;
-            console.log(errMsg);
-            return res.status(422).json({
-                errors: {
-                    status: "Rental details not added!",
-                    message: errMsg
-                }
-            });
-        } else {
-            return res.status(200).json({
-                success: {
-                    message: "Rental details added succefully"
-                }
-            });
-        }
-    });
-});
-
-
 module.exports = router;
