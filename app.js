@@ -54,8 +54,8 @@ var started = new Date();
 app.get('/', (req, res) => {
     res.send({
         started: "Started at :" + started,
-        uptime: (Date.now() - Number(started)) / 1000,
+        age: (Date.now() - Number(started)) / 1000,
     });
 })
 
-app.listen('5000', () => console.log(`Server is running on port ${5000}`))
+app.listen('5000', () => console.log(`Server listening to on port ${5000}`))
