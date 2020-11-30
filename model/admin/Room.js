@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-const AddRoom = Schema({
+const Rooms = Schema({
     noOfRooms: {type: Number, required: true},
 });
 
-mongoose.model('AddRoom', AddRoom);
+mongoose.model('Rooms', Rooms);

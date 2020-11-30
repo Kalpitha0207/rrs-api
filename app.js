@@ -37,14 +37,16 @@ mongoose.connect("mongodb://127.0.0.1:27017/rrs", { useNewUrlParser: true, useUn
 mongoose.set('debug', false)
 
 require('./model/User');
+require('./model/admin/Admin')
 require('./model/Reservation');
 require('./model/Rentals');
 require('./model/MealReservation');
 require('./model/ChargeToRoom');
 require('./model/Payment');
-require('./model/admin/AddRoom');
+require('./model/admin/Room');
 require('./model/admin/AddRoomDetails');
 require('./model/admin/AddRentalDetails');
+require('./model/admin/BookingDates')
 
 app.use(require('./routes'));
 
