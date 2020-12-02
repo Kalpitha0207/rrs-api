@@ -7,7 +7,7 @@ const Rentals = Schema({
     fromDate: {type: Date, required: true, default: Date.now},
     toDate: {type: Date, required: true},
     noOfBikes: {type: Number, required: true},
-    picnicLunch: String,
+    picnicLunch: {type: String},
 });
 
 mongoose.model('Rentals', Rentals);

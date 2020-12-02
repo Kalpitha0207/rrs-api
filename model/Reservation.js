@@ -9,7 +9,7 @@ const Reservation = Schema({
     toDate: { type: Date, required: true },
     noOfRooms: { type: Number, required: true },
     noOfAdults: { type: Number, required: true },
-    noOfChildren: { type: Number, required: true },
+    noOfChildren: { type: Number },
 });
 
 mongoose.model('Reservation', Reservation);
