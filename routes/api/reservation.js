@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const router = require('express').Router();
-var auth = require('../../routes/auth');
-var dates = require('../../utils/dates')
+// var auth = require('../../routes/auth');
+// var dates = require('../../utils/dates')
 
 const Users = mongoose.model('User')
 const Reservation = mongoose.model('Reservation');
@@ -10,65 +10,67 @@ const MealReservation = mongoose.model('MealReservation');
 const ChargeToRoom = mongoose.model('ChargeToRoom');
 const Payment = mongoose.model('Payment');
 const BookingDates = mongoose.model('BookingDates');
+const Rooms = mongoose.model('Rooms');
 
-// GET NO OF ROOMS 
-router.post('/getRooms', (req, res) => {
-    const { fromDate, toDate } = req.body;
-    if (fromDate || toDate) {
-        return res.status(422).json({
-            errors: {
-                message: 'Please enter all required fields!'
-            }
-        })
-    }
-    BookingDates.find({}, (err, result) => {
-        if (err) {
-            return res.status(422).json({
-                errors: {
-                    status: "Booking cannot be fetched",
-                    message: errMsg
-                }
-            });
-        } else {
-            // var days = dates.getNoOfDays(fromDate, toDate)
-            // let [day, month, year] = fromDate.split('.');
-            // let [day1, month1, year1] = toDate.split('.');
-            // const convertDate = (y,m,d)=> {
-            //     let concertedDate = (new Date(y, m - 1, d))*1000*60*60*24;
-            //     return concertedDate;
-            // }
-            // const convertResDate = (date)=> {
-            //     let dd = new Date(date)*1000*60*60*24
-            //     return dd;
-            // }
-            // const to = convertDate(year, month, day);
-            // const from = convertDate(year1, month1, day1);
-            // let loopDay = now;
-            // let resDate = convertResDate(result);
-            // var arrayDate = [];
-            // for (let i = 0; i < days; i++) {
-            //     if (to <= resDate) {
-            //         let newval = loopDay.setDate(loopDay.getDate() + 1);
-            //         let r = {
-            //             date: new Date(loopDay),
-            //             noOfRooms: 10,
-            //         }
-            //         arrayDate.push(r)                    
-            //     }
-            // }
-            return res.status(200).json({
-                success: {
-                    availableDates: result
-                }
-            });
-        }
-    })
-});
+
+// // GET NO OF ROOMS 
+// router.post('/getRooms', (req, res) => {
+//     const { fromDate, toDate } = req.body;
+//     if (fromDate || toDate) {
+//         return res.status(422).json({
+//             errors: {
+//                 message: 'Please enter all required fields!'
+//             }
+//         })
+//     }
+//     BookingDates.find({}, (err, result) => {
+//         if (err) {
+//             return res.status(422).json({
+//                 errors: {
+//                     status: "Booking cannot be fetched",
+//                     message: errMsg
+//                 }
+//             });
+//         } else {
+//             // var days = dates.getNoOfDays(fromDate, toDate)
+//             // let [day, month, year] = fromDate.split('.');
+//             // let [day1, month1, year1] = toDate.split('.');
+//             // const convertDate = (y,m,d)=> {
+//             //     let concertedDate = (new Date(y, m - 1, d))*1000*60*60*24;
+//             //     return concertedDate;
+//             // }
+//             // const convertResDate = (date)=> {
+//             //     let dd = new Date(date)*1000*60*60*24
+//             //     return dd;
+//             // }
+//             // const to = convertDate(year, month, day);
+//             // const from = convertDate(year1, month1, day1);
+//             // let loopDay = now;
+//             // let resDate = convertResDate(result);
+//             // var arrayDate = [];
+//             // for (let i = 0; i < days; i++) {
+//             //     if (to <= resDate) {
+//             //         let newval = loopDay.setDate(loopDay.getDate() + 1);
+//             //         let r = {
+//             //             date: new Date(loopDay),
+//             //             noOfRooms: 10,
+//             //         }
+//             //         arrayDate.push(r)                    
+//             //     }
+//             // }
+//             return res.status(200).json({
+//                 success: {
+//                     availableDates: result
+//                 }
+//             });
+//         }
+//     })
+// });
 
 
 // RESERVATION 
 router.post('/reservation', (req, res) => {
-    if (!req.body.userId || !req.body.reservationType || !req.body.fromDate || !req.body.toDate
+    if (!req.body.userId || !req.body.reservationType || !req.body.roomId || !req.body.fromDate || !req.body.toDate
         || !req.body.noOfRooms || !req.body.noOfAdults || !req.body.noOfChildren) {
         return res.status(422).json({
             errors: {
@@ -80,13 +82,13 @@ router.post('/reservation', (req, res) => {
     var reservation = new Reservation();
     reservation.userId = req.body.userId
     reservation.reservationType = req.body.reservationType;
+    reservation.roomId = req.body.roomId
     reservation.fromDate = req.body.fromDate;
     reservation.toDate = req.body.toDate;
     reservation.noOfRooms = req.body.noOfRooms;
     reservation.noOfAdults = req.body.noOfAdults;
     reservation.noOfChildren = req.body.noOfChildren;
 
-    // var totalDates = dates.getNoOfDays(reservation.fromDate, reservation.toDate)
 
     Users.findOne({ _id: req.body.userId }, (err, user) => {
         if (!user) {
@@ -94,79 +96,53 @@ router.post('/reservation', (req, res) => {
                 message: 'user not registered!',
             });
         } else {
-            reservation.save((err, data) => {
+            Rooms.find({ "_id": reservation.roomId }, (err, room) => {
                 if (err) {
                     return res.status(422).json({
                         errors: {
-                            status: "Booking cannot be fetched",
-                            message: errMsg
+                            status: "failed",
+                            message: err.errMsg
                         }
                     });
                 } else {
-                    return res.json({
-                        Success: {
-                            "message": 'Reservation completed!',
-                            "data": data,
-                        }
-                    });
+                    if (room[0].booked == true) {
+                        return res.status(422).json({
+                            message: 'Room not available',
+                        });
+                    } else {
+                        reservation.save((err, data) => {
+                            if (err) {
+                                return res.status(422).json({
+                                    errors: {
+                                        status: "Booking cannot be fetched",
+                                        message: errMsg
+                                    }
+                                });
+                            } else {
+                                Rooms.updateOne({ "_id": reservation.roomId }, { booked: true }).then((value) => console.log(value))
+                                return res.json({
+                                    Success: {
+                                        "message": 'Reservation completed!',
+                                        "data": data,
+                                    }
+                                });
+                            }
+                        })
+                    }
                 }
             })
-
-            // HERE WE NEED TO CHECK WHETHER ROOMS ARE AVAILABLE OR NOT
-            // Reservation.find({ noOfRooms: reservation.noOfRooms }, (err, Reservation) => {
-            //     if (Reservation.length == 0 || Reservation.length > req.body.noOfRooms) {
-            //         reservation.save((err, inserted) => {
-            //             if (err) {
-            //                 const errMsg = JSON.parse(JSON.stringify(err)).message;
-            //                 console.log(errMsg);
-            //                 return res.status(422).json({
-            //                     errors: {
-            //                         status: "Reservation not completed!",
-            //                         message: errMsg
-            //                     }
-            //                 });
-            //             } else {
-            //                 return res.status(200).json({
-            //                     success: {
-            //                         message: "Reservation succefully completed and process next step for payment"
-            //                     }
-            //                 });
-            //             }
-            //         });
-            //     } else if (Reservation.length < req.body.noOfRooms && Reservation.length >= 1) {
-            //         return res.status(422).json({
-            //             errors: {
-            //                 message: `Only ${Reservation.length} rooms available`
-            //             }
-            //         });
-            //     } else {
-            //         return res.status(422).json({
-            //             errors: {
-            //                 message: "Rooms not available"
-            //             }
-            //         });
-            //     }
-            // })
         }
     })
 
 });
 
 // Get reservations
-router.post('/getAllReservation', (req, res) => {
+router.get('/getAllReservation', (req, res) => {
 
-    if (!req.body.userId) {
-        return res.status(422).json({
-            errors: {
-                message: 'Email required!',
-            },
-        });
-    }
-
-    Reservation.find({}, (err, user) => {
-        if (user) {
+    Reservation.find({}, (err, reservations) => {
+        if (reservations) {
             return res.json({
-                "Reservations": user
+                "Reservations": reservations
             });
         } else {
             return res.status(422).json({

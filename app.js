@@ -43,8 +43,7 @@ require('./model/Rentals');
 require('./model/MealReservation');
 require('./model/ChargeToRoom');
 require('./model/Payment');
-require('./model/admin/Room');
-require('./model/admin/AddRoomDetails');
+require('./model/admin/Rooms');
 require('./model/admin/AddRentalDetails');
 require('./model/admin/BookingDates')
 
