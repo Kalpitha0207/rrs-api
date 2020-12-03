@@ -11,7 +11,7 @@ const Reservation = Schema({
     totalFare: { type: Number, required: false },
     noOfRooms: { type: Number, required: true },
     noOfAdults: { type: Number, required: true },
-    noOfChildren: { type: Number, required: true },
+    noOfChildren: { type: Number },
 });
 
 mongoose.model('Reservation', Reservation);

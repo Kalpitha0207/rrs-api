@@ -16,7 +16,7 @@ const Rooms = mongoose.model('Rooms');
 // RESERVATION 
 router.post('/reservation', (req, res) => {
     if (!req.body.userId || !req.body.reservationType || !req.body.roomId || !req.body.fromDate || !req.body.toDate
-        || !req.body.noOfRooms || !req.body.noOfAdults || !req.body.noOfChildren) {
+        || !req.body.noOfRooms || !req.body.noOfAdults ) {
         return res.status(422).json({
             errors: {
                 message: 'Please enter all required fields!'
@@ -107,7 +107,7 @@ router.get('/getAllReservation', (req, res) => {
 
 // RENTALS AND HIKES
 router.post('/rentalsHikes', (req, res) => {
-    const { equipmentType, fromDate, toDate, noOfBikes, picnicLunch } = req.body;
+    const { equipmentType, fromDate, toDate, noOfBikes, picnicLunch, userId } = req.body;
 
     if (!equipmentType || !fromDate || !toDate || !noOfBikes) {
         return res.status(422).json({
@@ -125,6 +125,7 @@ router.post('/rentalsHikes', (req, res) => {
     }
 
     var rentals = new Rentals();
+    rentals.userId = userId;
     rentals.equipmentType = equipmentType;
     rentals.fromDate = fromDate;
     rentals.toDate = toDate;
@@ -132,7 +133,7 @@ router.post('/rentalsHikes', (req, res) => {
     rentals.picnicLunch = picnicLunch;
 
     // HERE WE NEED TO CHECK WHETHER RENTAL BIKES ARE AVAILABLE OR NOT
-    if (Rentals.length == 0 || Rentals.length > noOfBikes) {
+    // if (Rentals.length == 0 || Rentals.length > noOfBikes) {
         rentals.save((err, inserted) => {
             if (err) {
                 const errMsg = JSON.parse(JSON.stringify(err)).message;
@@ -145,17 +146,18 @@ router.post('/rentalsHikes', (req, res) => {
             } else {
                 return res.status(200).json({
                     success: {
-                        message: "Rentals and Hikes succefully completed"
+                        message: "Rentals and Hikes succefully completed",
+                        data: inserted
                     }
                 });
             }
         });
-    }
+    // }
 });
 
 // MEAL RESERVATION
 router.post('/mealReservation', (req, res) => {
-    const { type, guestName, roomNo, reservationDate, noOfPeople, specialRequest } = req.body;
+    const { type, guestName, roomNo, reservationDate, noOfPeople, specialRequest, userId } = req.body;
     if (!type || !guestName || !roomNo || !reservationDate || !noOfPeople) {
         return res.status(422).json({
             errors: {
@@ -172,6 +174,7 @@ router.post('/mealReservation', (req, res) => {
     }
 
     var mealReservation = new MealReservation();
+    mealReservation.userId = userId;
     mealReservation.type = type;
     mealReservation.guestName = guestName;
     mealReservation.roomNo = roomNo;
@@ -180,7 +183,7 @@ router.post('/mealReservation', (req, res) => {
     mealReservation.specialRequest = specialRequest;
 
     // HERE WE NEED TO CHECK WHETHE ROOMS ARE AVAILABLE OR NOT
-    if (MealReservation.length == 0 || MealReservation.length > roomNo) {
+    // if (MealReservation.length == 0 || MealReservation.length > roomNo) {
         mealReservation.save((err, inserted) => {
             if (err) {
                 const errMsg = JSON.parse(JSON.stringify(err)).message;
@@ -193,17 +196,18 @@ router.post('/mealReservation', (req, res) => {
             } else {
                 return res.status(200).json({
                     success: {
-                        message: "Meal Reservation succefully completed"
+                        message: "Meal Reservation succefully completed",
+                        data: inserted
                     }
                 });
             }
         });
-    }
+    // }
 });
 
 // CHARGE TO ROOM
 router.post('/chargeToRoom', (req, res) => {
-    const { type, guestName, roomNo, serverName, tipToServer, noOfPeople, total } = req.body;
+    const { type, guestName, roomNo, serverName, tipToServer, noOfPeople, total, userId } = req.body;
     if (!type || !guestName || !roomNo || !serverName || !noOfPeople || !total) {
         return res.status(422).json({
             errors: {
@@ -220,6 +224,7 @@ router.post('/chargeToRoom', (req, res) => {
     }
 
     var chargeToRoom = new ChargeToRoom();
+    chargeToRoom.userId = userId;
     chargeToRoom.type = type;
     chargeToRoom.guestName = guestName;
     chargeToRoom.roomNo = roomNo;
@@ -228,7 +233,7 @@ router.post('/chargeToRoom', (req, res) => {
     chargeToRoom.noOfPeople = noOfPeople;
     chargeToRoom.total = total;
 
-    if (ChargeToRoom.length == 0 || ChargeToRoom.length > roomNo) {
+    // if (ChargeToRoom.length == 0 || ChargeToRoom.length > roomNo) {
         chargeToRoom.save((err, inserted) => {
             if (err) {
                 const errMsg = JSON.parse(JSON.stringify(err)).message;
@@ -241,18 +246,19 @@ router.post('/chargeToRoom', (req, res) => {
             } else {
                 return res.status(200).json({
                     success: {
-                        message: "succefully completed"
+                        message: "succefully completed",
+                        data: inserted
                     }
                 });
             }
         });
-    }
+    // }
 });
 
 
 // PAYEMENT
 router.post('/payment', (req, res) => {
-    const { cardNumber, cardName, expDate, cvv, amoumt } = req.body;
+    const { cardNumber, cardName, expDate, cvv, amoumt, userId } = req.body;
     if (!cardNumber || !cardName || !expDate || !cvv || !amoumt) {
         return res.status(422).json({
             errors: {
@@ -269,6 +275,7 @@ router.post('/payment', (req, res) => {
     }
 
     var payment = new Payment();
+    payment.userId = userId;
     payment.cardNumber = cardNumber;
     payment.cardName = cardName;
     payment.expDate = expDate;
