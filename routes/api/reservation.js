@@ -1,3 +1,4 @@
+const { json } = require('body-parser');
 const mongoose = require('mongoose');
 const router = require('express').Router();
 // var auth = require('../../routes/auth');
@@ -12,62 +13,6 @@ const Payment = mongoose.model('Payment');
 const BookingDates = mongoose.model('BookingDates');
 const Rooms = mongoose.model('Rooms');
 
-
-// // GET NO OF ROOMS 
-// router.post('/getRooms', (req, res) => {
-//     const { fromDate, toDate } = req.body;
-//     if (fromDate || toDate) {
-//         return res.status(422).json({
-//             errors: {
-//                 message: 'Please enter all required fields!'
-//             }
-//         })
-//     }
-//     BookingDates.find({}, (err, result) => {
-//         if (err) {
-//             return res.status(422).json({
-//                 errors: {
-//                     status: "Booking cannot be fetched",
-//                     message: errMsg
-//                 }
-//             });
-//         } else {
-//             // var days = dates.getNoOfDays(fromDate, toDate)
-//             // let [day, month, year] = fromDate.split('.');
-//             // let [day1, month1, year1] = toDate.split('.');
-//             // const convertDate = (y,m,d)=> {
-//             //     let concertedDate = (new Date(y, m - 1, d))*1000*60*60*24;
-//             //     return concertedDate;
-//             // }
-//             // const convertResDate = (date)=> {
-//             //     let dd = new Date(date)*1000*60*60*24
-//             //     return dd;
-//             // }
-//             // const to = convertDate(year, month, day);
-//             // const from = convertDate(year1, month1, day1);
-//             // let loopDay = now;
-//             // let resDate = convertResDate(result);
-//             // var arrayDate = [];
-//             // for (let i = 0; i < days; i++) {
-//             //     if (to <= resDate) {
-//             //         let newval = loopDay.setDate(loopDay.getDate() + 1);
-//             //         let r = {
-//             //             date: new Date(loopDay),
-//             //             noOfRooms: 10,
-//             //         }
-//             //         arrayDate.push(r)                    
-//             //     }
-//             // }
-//             return res.status(200).json({
-//                 success: {
-//                     availableDates: result
-//                 }
-//             });
-//         }
-//     })
-// });
-
-
 // RESERVATION 
 router.post('/reservation', (req, res) => {
     if (!req.body.userId || !req.body.reservationType || !req.body.roomId || !req.body.fromDate || !req.body.toDate
@@ -78,17 +23,17 @@ router.post('/reservation', (req, res) => {
             }
         })
     }
-
+    var roomId = [];
+    var rooms = [];
+    var totalFare = 0
     var reservation = new Reservation();
     reservation.userId = req.body.userId
     reservation.reservationType = req.body.reservationType;
-    reservation.roomId = req.body.roomId
     reservation.fromDate = req.body.fromDate;
     reservation.toDate = req.body.toDate;
     reservation.noOfRooms = req.body.noOfRooms;
     reservation.noOfAdults = req.body.noOfAdults;
     reservation.noOfChildren = req.body.noOfChildren;
-
 
     Users.findOne({ _id: req.body.userId }, (err, user) => {
         if (!user) {
@@ -96,44 +41,50 @@ router.post('/reservation', (req, res) => {
                 message: 'user not registered!',
             });
         } else {
-            Rooms.find({ "_id": reservation.roomId }, (err, room) => {
-                if (err) {
-                    return res.status(422).json({
-                        errors: {
-                            status: "failed",
-                            message: err.errMsg
-                        }
-                    });
-                } else {
-                    if (room[0].booked == true) {
-                        return res.status(422).json({
-                            message: 'Room not available',
-                        });
-                    } else {
-                        reservation.save((err, data) => {
-                            if (err) {
-                                return res.status(422).json({
-                                    errors: {
-                                        status: "Booking cannot be fetched",
-                                        message: errMsg
-                                    }
-                                });
-                            } else {
-                                Rooms.updateOne({ "_id": reservation.roomId }, { booked: true }).then((value) => console.log(value))
-                                return res.json({
-                                    Success: {
-                                        "message": 'Reservation completed!',
-                                        "data": data,
-                                    }
-                                });
-                            }
-                        })
+
+            Rooms.aggregate([
+                {
+                    $match: {
+                        // roomType: reservation.reservationType,
+                        booked: false,
                     }
-                }
-            })
+                }, {
+                    $project: {
+                        "roomId": 1,
+                        "roomNo": 1,
+                        "roomFare": 1
+                    }
+
+                }], (err, result) => {
+                    for (var key in result) {
+                        rooms.push(result[key].roomNo)
+                        roomId.push(result[key].roomId)
+                        totalFare += result[key].roomFare
+                    }
+                    reservation.roomNo = rooms
+                    reservation.totalFare = totalFare
+                    reservation.save((err, data) => {
+                        if (err) {
+                            return res.status(422).json({
+                                errors: {
+                                    status: "Booking cannot be fetched",
+                                    message: err
+                                }
+                            });
+                        } else {
+                            Rooms.update({ booked: true }).then((value) => console.log(value))
+                            return res.json({
+                                Success: {
+                                    "message": 'Reservation completed!',
+                                    "data": data,
+                                }
+                            });
+                        }
+                    })
+
+                })
         }
     })
-
 });
 
 // Get reservations
@@ -185,7 +136,6 @@ router.post('/rentalsHikes', (req, res) => {
         rentals.save((err, inserted) => {
             if (err) {
                 const errMsg = JSON.parse(JSON.stringify(err)).message;
-                console.log(errMsg);
                 return res.status(422).json({
                     errors: {
                         status: "Rentals and Hikes not completed!",
@@ -234,7 +184,6 @@ router.post('/mealReservation', (req, res) => {
         mealReservation.save((err, inserted) => {
             if (err) {
                 const errMsg = JSON.parse(JSON.stringify(err)).message;
-                console.log(errMsg);
                 return res.status(422).json({
                     errors: {
                         status: "Meal Reservation not completed!",
@@ -283,7 +232,6 @@ router.post('/chargeToRoom', (req, res) => {
         chargeToRoom.save((err, inserted) => {
             if (err) {
                 const errMsg = JSON.parse(JSON.stringify(err)).message;
-                console.log(errMsg);
                 return res.status(422).json({
                     errors: {
                         status: "not completed!",
@@ -330,7 +278,6 @@ router.post('/payment', (req, res) => {
     payment.save((err, inserted) => {
         if (err) {
             const errMsg = JSON.parse(JSON.stringify(err)).message;
-            console.log(errMsg);
             return res.status(422).json({
                 errors: {
                     status: "Payment is not completed!",
