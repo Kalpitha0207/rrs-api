@@ -11,7 +11,7 @@ const Payment = mongoose.model('Payment');
 const Rooms = mongoose.model('Rooms');
 
 // RESERVATION 
-router.post('/reservation', (req, res) => {
+router.post('/roomReservation', (req, res) => {
     if (!req.body.userId || !req.body.reservationType || !req.body.roomId || !req.body.fromDate || !req.body.toDate
         || !req.body.noOfRooms || !req.body.noOfAdults) {
         return res.status(422).json({
@@ -100,9 +100,10 @@ router.post('/reservation', (req, res) => {
 });
 
 // Get reservations
-router.get('/getAllReservation', (req, res) => {
+router.post('/getUserRoomReservations', (req, res) => {
 
-    Reservation.find({}, (err, reservations) => {
+    var user_id = req.body.userId;
+    Reservation.find({ "userId": user_id }, (err, reservations) => {
         if (reservations) {
             return res.json({
                 "Reservations": reservations
@@ -110,7 +111,7 @@ router.get('/getAllReservation', (req, res) => {
         } else {
             return res.status(422).json({
                 errors: {
-                    message: 'username or password wrong',
+                    message: 'Failed to get details',
                 },
             });;
         }
@@ -167,6 +168,25 @@ router.post('/rentalsHikes', (req, res) => {
     // }
 });
 
+// Get reservations
+router.post('/getrentalsHikes', (req, res) => {
+
+    var user_id = req.body.userId;
+    Rentals.find({ "userId": user_id }, (err, reservations) => {
+        if (reservations) {
+            return res.json({
+                "Reservations": reservations
+            });
+        } else {
+            return res.status(422).json({
+                errors: {
+                    message: 'Failed to get details',
+                },
+            });;
+        }
+    })
+});
+
 // MEAL RESERVATION
 router.post('/mealReservation', (req, res) => {
     const { type, guestName, roomNo, reservationDate, noOfPeople, specialRequest, userId } = req.body;
@@ -215,6 +235,25 @@ router.post('/mealReservation', (req, res) => {
         }
     });
     // }
+});
+
+// Get reservations
+router.post('/getUserMealReservation', (req, res) => {
+
+    var user_id = req.body.userId;
+    MealReservation.find({ "userId": user_id }, (err, reservations) => {
+        if (reservations) {
+            return res.json({
+                "Reservations": reservations
+            });
+        } else {
+            return res.status(422).json({
+                errors: {
+                    message: 'Failed to get details',
+                },
+            });;
+        }
+    })
 });
 
 // CHARGE TO ROOM
@@ -267,21 +306,33 @@ router.post('/chargeToRoom', (req, res) => {
     // }
 });
 
+// Get reservations
+router.post('/getUserchargeToRoom', (req, res) => {
+
+    var user_id = req.body.userId;
+    ChargeToRoom.find({ "userId": user_id }, (err, reservations) => {
+        if (reservations) {
+            return res.json({
+                "Reservations": reservations
+            });
+        } else {
+            return res.status(422).json({
+                errors: {
+                    message: 'Failed to get details',
+                },
+            });;
+        }
+    })
+});
+
 
 // PAYEMENT
 router.post('/payment', (req, res) => {
-    const { cardNumber, cardName, expDate, cvv, amoumt, userId } = req.body;
-    if (!cardNumber || !cardName || !expDate || !cvv || !amoumt) {
+    const { cardNumber, cardName, expDate, cvv, amount, userId } = req.body;
+    if (!cardNumber || !cardName || !expDate || !cvv || !amount) {
         return res.status(422).json({
             errors: {
                 message: 'Please enter all required fields!'
-            }
-        })
-    }
-    if (typeof cardNumber !== 'number' || typeof cvv !== 'number' || typeof amoumt !== 'number') {
-        return res.status(422).json({
-            errors: {
-                message: 'Card Number, CVV and Amount should be number'
             }
         })
     }
@@ -292,7 +343,7 @@ router.post('/payment', (req, res) => {
     payment.cardName = cardName;
     payment.expDate = expDate;
     payment.cvv = cvv;
-    payment.amoumt = amoumt;
+    payment.amount = amount;
 
     payment.save((err, inserted) => {
         if (err) {
@@ -314,7 +365,23 @@ router.post('/payment', (req, res) => {
 
 });
 
+router.post('/getUserPayment', (req, res) => {
 
+    var user_id = req.body.userId;
+    Payment.find({ "userId": user_id }, (err, reservations) => {
+        if (reservations) {
+            return res.json({
+                "Reservations": reservations
+            });
+        } else {
+            return res.status(422).json({
+                errors: {
+                    message: 'Failed to get details',
+                },
+            });;
+        }
+    })
+});
 
 
 
