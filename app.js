@@ -5,6 +5,7 @@ const app = express();
 
 const bodyParser = require('body-parser')
 
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -26,7 +27,7 @@ app.use(function (req, res, next) {
     next();
 });
 
-mongoose.connect("mongodb://127.0.0.1:27017/rrs", { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect("mongodb://127.0.0.1:27017/rrs", { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
     .then(() => {
         // console.log("mongodb connected successfully");
     })
@@ -48,7 +49,6 @@ require('./model/admin/AddRentalDetails');
 require('./model/admin/BookingDates')
 
 app.use(require('./routes'));
-
 
 var started = new Date();
 

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const Rooms = Schema({
-    roomNo: { type: Number, unique: true, required: true },
+    roomNo: { type: Number, required: true },
     roomType: { type: String, required: true },
     roomFare: { type: Number, required: true },
     noOfBeds: { type: Number, required: true },

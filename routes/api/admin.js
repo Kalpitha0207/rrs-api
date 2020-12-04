@@ -95,7 +95,6 @@ router.post('/signin', (req, res) => {
 
 // ADD NEW ROOM 
 router.post('/addRoom', (req, res) => {
-    console.log(req.body)
     if (!req.body.roomNo || !req.body.roomType || !req.body.roomFare
         || !req.body.noOfBeds || !req.body.noOfAdults || !req.body.noOfChildren || !req.body.description) {
         return res.status(422).json({

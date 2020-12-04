@@ -1,8 +1,6 @@
 const { json } = require('body-parser');
 const mongoose = require('mongoose');
 const router = require('express').Router();
-// var auth = require('../../routes/auth');
-// var dates = require('../../utils/dates')
 
 const Users = mongoose.model('User')
 const Reservation = mongoose.model('Reservation');
@@ -10,27 +8,23 @@ const Rentals = mongoose.model('Rentals');
 const MealReservation = mongoose.model('MealReservation');
 const ChargeToRoom = mongoose.model('ChargeToRoom');
 const Payment = mongoose.model('Payment');
-const BookingDates = mongoose.model('BookingDates');
 const Rooms = mongoose.model('Rooms');
 
 // RESERVATION 
 router.post('/reservation', (req, res) => {
     if (!req.body.userId || !req.body.reservationType || !req.body.roomId || !req.body.fromDate || !req.body.toDate
-        || !req.body.noOfRooms || !req.body.noOfAdults ) {
+        || !req.body.noOfRooms || !req.body.noOfAdults) {
         return res.status(422).json({
             errors: {
                 message: 'Please enter all required fields!'
             }
         })
     }
-    var roomId = [];
-    var rooms = [];
-    var totalFare = 0
     var reservation = new Reservation();
-    reservation.userId = req.body.userId
+    reservation.userId = req.body.userId;
     reservation.reservationType = req.body.reservationType;
-    reservation.fromDate = req.body.fromDate;
-    reservation.toDate = req.body.toDate;
+    reservation.fromDate = new Date(req.body.fromDate);
+    reservation.toDate = new Date(req.body.toDate);
     reservation.noOfRooms = req.body.noOfRooms;
     reservation.noOfAdults = req.body.noOfAdults;
     reservation.noOfChildren = req.body.noOfChildren;
@@ -41,48 +35,66 @@ router.post('/reservation', (req, res) => {
                 message: 'user not registered!',
             });
         } else {
-
             Rooms.aggregate([
                 {
-                    $match: {
-                        // roomType: reservation.reservationType,
-                        booked: false,
+                    $graphLookup: {
+                        from: "reservations",
+                        startWith: "$_id",
+                        connectFromField: "_id",
+                        connectToField: "roomId",
+                        as: "reserved",
+                        restrictSearchWithMatch: { $and: [{ fromDate: { $lte: reservation.fromDate }, toDate: { $gt: reservation.toDate } }] }
                     }
                 }, {
                     $project: {
-                        "roomId": 1,
-                        "roomNo": 1,
-                        "roomFare": 1
+                        _id: 1,
+                        roomNo: 1,
+                        roomFare: 1,
+                        reserved: { $size: '$reserved' }
                     }
-
-                }], (err, result) => {
+                },
+                {
+                    $match: {
+                        reserved: 0
+                    }
+                }
+            ], (err, result) => {
+                if (result.length >= reservation.noOfRooms) {
                     for (var key in result) {
-                        rooms.push(result[key].roomNo)
-                        roomId.push(result[key].roomId)
-                        totalFare += result[key].roomFare
+                        reservation.roomId = result[key]._id
+                        reservation.roomNo = result[key].roomNo
+                        reservation.totalFare = result[key].roomFare
                     }
-                    reservation.roomNo = rooms
-                    reservation.totalFare = totalFare
-                    reservation.save((err, data) => {
-                        if (err) {
-                            return res.status(422).json({
-                                errors: {
-                                    status: "Booking cannot be fetched",
-                                    message: err
-                                }
-                            });
-                        } else {
-                            Rooms.update({ booked: true }).then((value) => console.log(value))
-                            return res.json({
-                                Success: {
-                                    "message": 'Reservation completed!',
-                                    "data": data,
-                                }
-                            });
+                    for (var i = 0; i < reservation.noOfRooms; i++) {
+                        reservation.save((err, data) => {
+                            if (err) {
+                                return res.status(422).json({
+                                    errors: {
+                                        status: "Booking failed!",
+                                        message: err.errmsg
+                                    }
+                                });
+                            } else {
+                                return res.json({
+                                    Success: {
+                                        "message": 'Reservation completed!',
+                                        "data": data,
+                                    }
+                                });
+                            }
+                        })
+                    }
+                } else {
+                    return res.status(422).json({
+                        errors: {
+                            status: false,
+                            messae: result.length + " Rooms available."
                         }
-                    })
+                    });
+                }
 
-                })
+
+            })
         }
     })
 });
@@ -134,24 +146,24 @@ router.post('/rentalsHikes', (req, res) => {
 
     // HERE WE NEED TO CHECK WHETHER RENTAL BIKES ARE AVAILABLE OR NOT
     // if (Rentals.length == 0 || Rentals.length > noOfBikes) {
-        rentals.save((err, inserted) => {
-            if (err) {
-                const errMsg = JSON.parse(JSON.stringify(err)).message;
-                return res.status(422).json({
-                    errors: {
-                        status: "Rentals and Hikes not completed!",
-                        message: errMsg
-                    }
-                });
-            } else {
-                return res.status(200).json({
-                    success: {
-                        message: "Rentals and Hikes succefully completed",
-                        data: inserted
-                    }
-                });
-            }
-        });
+    rentals.save((err, inserted) => {
+        if (err) {
+            const errMsg = JSON.parse(JSON.stringify(err)).message;
+            return res.status(422).json({
+                errors: {
+                    status: "Rentals and Hikes not completed!",
+                    message: errMsg
+                }
+            });
+        } else {
+            return res.status(200).json({
+                success: {
+                    message: "Rentals and Hikes succefully completed",
+                    data: inserted
+                }
+            });
+        }
+    });
     // }
 });
 
@@ -184,24 +196,24 @@ router.post('/mealReservation', (req, res) => {
 
     // HERE WE NEED TO CHECK WHETHE ROOMS ARE AVAILABLE OR NOT
     // if (MealReservation.length == 0 || MealReservation.length > roomNo) {
-        mealReservation.save((err, inserted) => {
-            if (err) {
-                const errMsg = JSON.parse(JSON.stringify(err)).message;
-                return res.status(422).json({
-                    errors: {
-                        status: "Meal Reservation not completed!",
-                        message: errMsg
-                    }
-                });
-            } else {
-                return res.status(200).json({
-                    success: {
-                        message: "Meal Reservation succefully completed",
-                        data: inserted
-                    }
-                });
-            }
-        });
+    mealReservation.save((err, inserted) => {
+        if (err) {
+            const errMsg = JSON.parse(JSON.stringify(err)).message;
+            return res.status(422).json({
+                errors: {
+                    status: "Meal Reservation not completed!",
+                    message: errMsg
+                }
+            });
+        } else {
+            return res.status(200).json({
+                success: {
+                    message: "Meal Reservation succefully completed",
+                    data: inserted
+                }
+            });
+        }
+    });
     // }
 });
 
@@ -234,24 +246,24 @@ router.post('/chargeToRoom', (req, res) => {
     chargeToRoom.total = total;
 
     // if (ChargeToRoom.length == 0 || ChargeToRoom.length > roomNo) {
-        chargeToRoom.save((err, inserted) => {
-            if (err) {
-                const errMsg = JSON.parse(JSON.stringify(err)).message;
-                return res.status(422).json({
-                    errors: {
-                        status: "not completed!",
-                        message: errMsg
-                    }
-                });
-            } else {
-                return res.status(200).json({
-                    success: {
-                        message: "succefully completed",
-                        data: inserted
-                    }
-                });
-            }
-        });
+    chargeToRoom.save((err, inserted) => {
+        if (err) {
+            const errMsg = JSON.parse(JSON.stringify(err)).message;
+            return res.status(422).json({
+                errors: {
+                    status: "not completed!",
+                    message: errMsg
+                }
+            });
+        } else {
+            return res.status(200).json({
+                success: {
+                    message: "succefully completed",
+                    data: inserted
+                }
+            });
+        }
+    });
     // }
 });
 
@@ -301,6 +313,8 @@ router.post('/payment', (req, res) => {
     });
 
 });
+
+
 
 
 
