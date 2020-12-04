@@ -3,6 +3,7 @@ const { Schema } = mongoose;
 
 const Payment = Schema({
     userId: { type: Schema.Types.ObjectId, required: true },
+    paymentType: { type: String, required: true },
     cardNumber: { type: String, required: true },
     cardName: { type: String, required: true },
     expDate: { type: String, required: true },

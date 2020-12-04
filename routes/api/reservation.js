@@ -92,8 +92,6 @@ router.post('/roomReservation', (req, res) => {
                         }
                     });
                 }
-
-
             })
         }
     })
@@ -328,8 +326,8 @@ router.post('/getUserchargeToRoom', (req, res) => {
 
 // PAYEMENT
 router.post('/payment', (req, res) => {
-    const { cardNumber, cardName, expDate, cvv, amount, userId } = req.body;
-    if (!cardNumber || !cardName || !expDate || !cvv || !amount) {
+    const { cardNumber, cardName, expDate, cvv, amount, userId, paymentType } = req.body;
+    if (!cardNumber || !cardName || !expDate || !cvv || !amount || !paymentType) {
         return res.status(422).json({
             errors: {
                 message: 'Please enter all required fields!'
@@ -339,6 +337,7 @@ router.post('/payment', (req, res) => {
 
     var payment = new Payment();
     payment.userId = userId;
+    payment.paymentType = paymentType;
     payment.cardNumber = cardNumber;
     payment.cardName = cardName;
     payment.expDate = expDate;
