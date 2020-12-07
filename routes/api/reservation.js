@@ -116,6 +116,24 @@ router.post('/getUserRoomReservations', (req, res) => {
     })
 });
 
+// Get all reservations
+router.get('/getAllReservations', (req, res) => {
+    Reservation.find({}, (err, reservations) => {
+        if (reservations) {
+            return res.json({
+                "Reservations": reservations
+            });
+        } else {
+            return res.status(422).json({
+                errors: {
+                    message: 'Failed to get details',
+                },
+            });;
+        }
+    })
+});
+
+
 // RENTALS AND HIKES
 router.post('/rentalsHikes', (req, res) => {
     const { equipmentType, fromDate, toDate, noOfBikes, picnicLunch, userId } = req.body;

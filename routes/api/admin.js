@@ -76,7 +76,7 @@ router.post('/signin', (req, res) => {
         });
     }
 
-    Admin.findOne({ name: req.body.email }, (err, admin) => {
+    Admin.findOne({ email: req.body.email }, (err, admin) => {
         if (admin && admin.validatePassword(req.body.password)) {
             return res.json({
                 message: 'Admin signed in successfully!',
